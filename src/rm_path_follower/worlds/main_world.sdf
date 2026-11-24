@@ -1,0 +1,392 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <world name="classroom">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    
+    <!-- Plugin necessário para publicar os tópicos dos sensores da cena -->
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <!-- 1. Configuração global da cena para desativar sombras e uniformizar a luz -->
+    <scene>
+      <ambient>0.8 0.8 0.8 1.0</ambient>
+      <background>0.8 0.8 0.8 1.0</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <!-- 2. Luz do Sol com projeção de sombras desligada (cast_shadows = false) -->
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>1.0 1.0 1.0 1</diffuse>
+      <specular>0.0 0.0 0.0 1</specular>
+      <!-- Apontando diretamente para baixo (0, 0, -1) para iluminação Zenital uniforme -->
+      <direction>0 0 -1</direction>
+    </light>
+
+
+    <!-- Chão modificado para Branco Puro e Sem Reflexo (Alto Contraste) -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>20 20</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>20 20</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1.0 1.0 1.0 1</ambient>
+            <diffuse>1.0 1.0 1.0 1</diffuse>
+            <specular>0.0 0.0 0.0 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Câmera Ortográfica no Centro do Cenário (X=2.0, Y=1.0) -->
+    <model name="map_camera">
+      <static>true</static>
+      <!-- Posicionada a 100m de altura com pitch e yaw de 90° (1.5708 rad) | apontada para o chão e x e y alinhados com u e v da imagem -->
+      <pose>2.0 1.0 100.0 0 1.5708 1.5708</pose>
+      <link name="link">
+        <sensor name="ortho_camera" type="camera">
+          <camera>
+            <!-- FOV de 0.1 rad a 100m cobre uma região de ~10x10m (X: [-3, 7], Y: [-4, 6]) -->
+            <horizontal_fov>0.1</horizontal_fov>
+            <image>
+              <width>1200</width>
+              <height>1200</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>150.0</far>
+            </clip>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>1</update_rate>
+          <topic>map_camera/image_raw</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- =================================================================== -->
+    <!-- PAREDES PERIFÉRICAS (Delimitação de 9.8m x 9.8m centrada em 2.0, 1.0) -->
+    <!-- Espessura de 0.20m garante nitidez após a redução de grade (5x)      -->
+    <!-- =================================================================== -->
+
+    <!-- Parede Leste (+X): limite em X = 6.9m -->
+    <model name="parede_fundo">
+      <static>true</static>
+      <pose>6.9 1.0 0.5 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.2 10.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.2 10.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Parede Oeste (-X): limite em X = -2.9m -->
+    <model name="parede_atras">
+      <static>true</static>
+      <pose>-2.9 1.0 0.5 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.2 10.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.2 10.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Parede Norte (+Y): limite em Y = 5.9m -->
+    <model name="parede_esquerda">
+      <static>true</static>
+      <pose>2.0 5.9 0.5 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>10.0 0.2 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10.0 0.2 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Parede Sul (-Y): limite em Y = -3.9m -->
+    <model name="parede_direita">
+      <static>true</static>
+      <pose>2.0 -3.9 0.5 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>10.0 0.2 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10.0 0.2 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =================================================================== -->
+    <!-- OBSTÁCULOS INTERNOS (Área de spawn em 0.0, 0.0 mantida desobstruída)-->
+    <!-- =================================================================== -->
+
+    <!-- Caixa Central 1: bloqueia a linha reta inicial a partir da origem (0,0) -->
+    <model name="caixa_trajetoria">
+      <static>true</static>
+      <pose>2.0 0.0 0.4 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.6 0.6 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.6 0.6 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Caixa Central 2: cria corredor diagonal (slalom) no quadrante nordeste -->
+    <model name="caixa_lateral">
+      <static>true</static>
+      <pose>2.8 2.4 0.4 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.6 0.6 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.6 0.6 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Divisória Norte: parede interna acoplada ao norte (Y = 2.8m a 5.8m)
+         Força contornos em "U" para metas no canto superior direito (ex: X=5.5, Y=4.5) -->
+    <model name="divisoria_norte">
+      <static>true</static>
+      <pose>4.2 4.3 0.5 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.25 3.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.25 3.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Divisória Sul: parede interna acoplada ao sul (Y = -3.8m a -1.6m)
+         Cria barreira no quadrante inferior central -->
+    <model name="divisoria_sul">
+      <static>true</static>
+      <pose>1.5 -2.7 0.5 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.25 2.2 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.25 2.2 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Coluna Cilíndrica Noroeste: testa inflação radial e curvas contínuas -->
+    <model name="cilindro_noroeste">
+      <static>true</static>
+      <pose>-1.2 2.8 0.4 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.45</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.45</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Coluna Cilíndrica Sudeste: obstáculo circular próximo ao canto inferior direito -->
+    <model name="cilindro_sudeste">
+      <static>true</static>
+      <pose>5.2 -1.8 0.4 0 0 0</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.45</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.45</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Bloco Rotacionado Sudoeste: obstáculo inclinado (~23°) para testar bordas oblíquas -->
+    <model name="bloco_inclinado_sudoeste">
+      <static>true</static>
+      <pose>-1.4 -2.0 0.4 0 0 0.4</pose>
+      <link name="body">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.9 0.5 0.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.9 0.5 0.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.12 1</ambient>
+            <diffuse>0.7 0.3 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

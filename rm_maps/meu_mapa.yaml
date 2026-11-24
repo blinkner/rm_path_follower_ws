@@ -1,0 +1,9 @@
+free_thresh: 0.196
+image: meu_mapa.pgm
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -3.0042
+- -4.0042
+- 0.0
+resolution: 0.00834
